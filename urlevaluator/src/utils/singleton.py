@@ -1,6 +1,8 @@
 from functools import wraps
 from threading import Lock
 
+RESOURCES_DIRECTORY = 'resources'
+
 def singleton(cls):
     instances = {}
     lock = Lock()
@@ -13,3 +15,4 @@ def singleton(cls):
                     instances[cls] = cls(*args, **kwargs)
         return instances[cls]
     return get_instance 
+

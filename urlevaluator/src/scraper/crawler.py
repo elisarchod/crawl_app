@@ -12,10 +12,11 @@ from urlevaluator.src.scraper.link_models import Link
 
 REQUEST_DELAY = 1.0
 MAX_URLS = 32
-LIMIT_CONTENT = 1000
+CONTENT_SIZE = 200
 
 class WebScraper:
     def __init__(self, initial_url: str, max_depth: int):
+        logger.info("Starting web scraping script")
         self.initial_url = initial_url
         self.max_depth = max_depth
         self.urls_scraped = 0
@@ -39,7 +40,7 @@ class WebScraper:
             Link(
                 url=urljoin(base_url, a['href']),
                 text=a.get_text(strip=True) or 'No text',
-                content=(a.parent.get_text(strip=True)[:LIMIT_CONTENT] if a.parent else 'No content')
+                content=(a.parent.get_text(strip=True)[:CONTENT_SIZE] if a.parent else 'No content')
             )
             for a in soup.find_all('a', href=True)
             if self.is_valid_url(urljoin(base_url, a['href']))
@@ -49,8 +50,8 @@ class WebScraper:
         if depth > self.max_depth or self.db.is_url_visited(url) or self.urls_scraped >= MAX_URLS:
             return
 
-        self.urls_scraped += 1
         self.db.mark_url_visited(url)
+        self.urls_scraped += 1
         logger.info(f"Scraping {url} (depth: {depth}, urls scraped: {self.urls_scraped}/{MAX_URLS})")
         time.sleep(REQUEST_DELAY)
         soup: BeautifulSoup = self.get_page_content(url)

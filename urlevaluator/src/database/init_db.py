@@ -1,11 +1,10 @@
 import os
 from dotenv import load_dotenv
 import duckdb
-from urlevaluator.src.utils.singleton import singleton
+from urlevaluator.src.utils.singleton import singleton, RESOURCES_DIRECTORY
 from urlevaluator.src.utils.log_handler import logger
 
 load_dotenv()
-DB_DIRECTORY = 'data'
 
 @singleton
 class DatabaseManager:
@@ -13,8 +12,8 @@ class DatabaseManager:
         self.db_name = db_name
         if not self.db_name:
             raise ValueError("DB_NAME environment variable is not set")
-            
-        self.db_path = os.path.join(DB_DIRECTORY, self.db_name)
+
+        self.db_path = os.path.join(RESOURCES_DIRECTORY, self.db_name)
 
     def get_db_path(self) -> str:
         return self.db_path
@@ -33,10 +32,10 @@ class DatabaseManager:
         conn.execute('''
             CREATE TABLE pages (
                 id BIGINT PRIMARY KEY DEFAULT nextval('pages_id_seq'),
-                url TEXT UNIQUE,
-                source_url TEXT,
+                url VARCHAR(2048) UNIQUE,
+                source_url VARCHAR(2048),
                 depth INTEGER,
-                title TEXT,
+                title VARCHAR(255),
                 created_at TIMESTAMP
             )
         ''')
@@ -45,9 +44,9 @@ class DatabaseManager:
             CREATE TABLE links (
                 id BIGINT PRIMARY KEY DEFAULT nextval('links_id_seq'),
                 page_id BIGINT,
-                url TEXT,
-                link_text TEXT,
-                content TEXT,
+                url VARCHAR(2048),
+                link_text VARCHAR(255),
+                content VARCHAR(2048),
                 topic_scores JSON,
                 visited_at TIMESTAMP,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -62,5 +61,6 @@ class DatabaseManager:
 db_manager = DatabaseManager(os.environ.get('DB_NAME'))
 
 if __name__ == "__main__":
+    os.makedirs(RESOURCES_DIRECTORY, exist_ok=True)
     db_manager.create_database()
 

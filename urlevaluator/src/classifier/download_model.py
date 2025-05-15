@@ -1,11 +1,10 @@
 import os
 from dotenv import load_dotenv
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
-from urlevaluator.src.utils.singleton import singleton
+from urlevaluator.src.utils.singleton import singleton, RESOURCES_DIRECTORY
 from urlevaluator.src.utils.log_handler import logger
 
 load_dotenv()
-MODELS_DIRECTORY = 'models'
 
 @singleton
 class ModelManager:
@@ -14,7 +13,7 @@ class ModelManager:
         if not self.model_name:
             raise ValueError("Model name must be provided")
             
-        self.model_path = os.path.join(MODELS_DIRECTORY, self.model_name)
+        self.model_path = os.path.join(RESOURCES_DIRECTORY, self.model_name)
 
     def get_model_path(self) -> str:
         return self.model_path
@@ -36,4 +35,5 @@ class ModelManager:
 model_manager = ModelManager(os.environ.get('MODEL_NAME'))
 
 if __name__ == "__main__":
+    os.makedirs(RESOURCES_DIRECTORY, exist_ok=True)
     model_manager.download_model()

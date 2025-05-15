@@ -10,8 +10,6 @@ COPY urlevaluator ./urlevaluator
 
 RUN poetry config virtualenvs.create false && poetry install --no-interaction --no-ansi
 
-RUN mkdir -p data models
-
 ARG DB_NAME
 ARG MODEL_NAME
 

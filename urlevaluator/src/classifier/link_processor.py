@@ -9,9 +9,10 @@ DEFAULT_TOPICS = ["technology", "sports", "politics", "entertainment", "science"
 
 class LinkProcessor:
     def __init__(self, initial_url: str, additional_topics: Optional[List[str]]):
-        topics = DEFAULT_TOPICS + additional_topics if additional_topics else DEFAULT_TOPICS
+        logger.info("Starting to initialize LinkProcessor")
+        self.topics = [*DEFAULT_TOPICS, *(additional_topics or [])]
         self.db_manager = QueueManager(initial_url)
-        self.classifier = TopicClassifier(topics)
+        self.classifier = TopicClassifier(self.topics)
 
     def _process_single_link(self, link_id: int, target_text: str) -> bool:
         topic_scores: Dict[str, float] = self.classifier.classify_text(target_text)
@@ -31,7 +32,7 @@ class LinkProcessor:
                 logger.error(f"Error processing link {link_id}: {str(e)}")
         return processed_count
 
-    def process_links(self, batch_size: int = 100):
+    def process_links(self, batch_size: int):
         total_processed = 0
         last_id: Optional[int] = None
         total_pending = self.db_manager.get_total_pending()

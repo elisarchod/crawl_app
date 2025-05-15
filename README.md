@@ -1,24 +1,25 @@
-
 # Project description
 
 ## Author
 **Name:** Elisar Chodorov  
 **Email:** elisar.chod@gmail.com
 
-## Short answers in respect to assinment
+## Short answers in respect to assignment
 
 * build a web scrapper that collects and stores the web data in a local duck db
+* after we **finish** crawling we classify the text with a queue manager 
 * collect title and content but used only title for the model, could have used first n of the web page content
-* after we **finish** crawling we classify the text with a queue manager
-* i separated the 2 procces, since we will probaly need 2 diffretnt machines to run this procces, first to crawl with CPU intence machine and then to classify a GPU based machine
-* used the provided list of topics for scoring the text, the application supports passing addtional topcis for comparison, but each addtional topic to score increses infarance time as the model loops each topic
+* Decoupled the 2 process, since we will need 2 different types of machines to run the processes, 
+  1. first to crawl with CPU intense machine 
+  2. GPU oriented machine to classify 
+* used the provided list of topics for scoring the text, the application supports passing additional topics for comparison, but each additional topic to score increases inference time as the model loops each topic
 * the model worked very slow on my laptop, i did not try to use async communication for web crawling, we could defentaly try it
-* Shoud scale horizntaly for handeling 10,000,000 it sound like a lot of url to cover and you should use parallel computing (I guess the don't need to be too powerfull), with a very good and efficient batching in order to avoid duplicate calculations
-* I have a recoivary from where we left in the web crawler and in the link procces based on the db
-* there is an explantaion about the docker, please note that build takes sevral minutes as it downloads the model and initates the db, but it will be ready to scrap and find topic the moment the container finished
+* Should scale horizontally for handling 10,000,000 it sounds like a lot of url to cover, and you should use parallel computing (I guess the don't need to be too powerful), with a very good and efficient batching in order to avoid duplicate calculations
+* I have a recovery from where we left both in the web crawler and in the link process based
+* there is an explanation about the docker, please note the build takes several minutes as it downloads the model and initates the db, but it will be ready to scrap and find topic the moment the container finished
 
 #### TL:DR
-just run the follwing commands from the project dir:
+just run the following commands from the project dir:
 
 Build example:
 ```bash
@@ -86,6 +87,12 @@ Analytics (aggregates topic scores)
   - Has number of URLs collect limit 
 
 ### Classification System (`classifier/`)
+- `download_model.py`:
+  - Implements ModelManager singleton class
+  - Handles model and tokenizer download from HuggingFace
+  - Caches models locally in resources directory
+  - Supports model name configuration via environment variables
+  - Provides model path management
 - `link_processor.py`:
   - Processes links in batches
   - Coordinates classification workflow
@@ -95,7 +102,7 @@ Analytics (aggregates topic scores)
   - Interfaces with HuggingFace model
   - Classifies text into predefined topics
   - Handles model inference
-
+  
 ### Utility Components (`utils/`)
 - `singleton.py`:
   - Provides database and model management
@@ -151,19 +158,7 @@ pytest tests/
 #### copy project to server
 ```bash
 # Remove existing project directory on server
-ssh pie@192.168.1.205 "rm -rf ~/git/arpe"
-
-# Sync project files to server, including only relevant files
-rsync -avz \
-    --include 'urlevaluator/***' \
-    --include 'pyproject.toml' \
-    --include 'poetry.lock' \
-    --include 'Dockerfile' \
-    --include 'README.md' \
-    --include '.env.' \
-    --exclude '**/__*/' \
-    --exclude '*' \
-    . pie@192.168.1.205:~/git/arpe/
+ssh pie@192.168.1.205 "rm -rf ~/git/arpe" && rsync -avz --include '**/*.py' --include '**/*.toml' --include 'Dockerfile' --include '**/*.md' --exclude '*' . pie@192.168.1.205:~/git/arpe/
 ```
 
 
