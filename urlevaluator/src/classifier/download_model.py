@@ -35,5 +35,4 @@ class ModelManager:
 model_manager = ModelManager(os.environ.get('MODEL_NAME'))
 
 if __name__ == "__main__":
-    os.makedirs(RESOURCES_DIRECTORY, exist_ok=True)
     model_manager.download_model()

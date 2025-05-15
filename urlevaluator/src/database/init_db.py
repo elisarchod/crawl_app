@@ -12,7 +12,6 @@ class DatabaseManager:
         self.db_name = db_name
         if not self.db_name:
             raise ValueError("DB_NAME environment variable is not set")
-
         self.db_path = os.path.join(RESOURCES_DIRECTORY, self.db_name)
 
     def get_db_path(self) -> str:
@@ -61,6 +60,5 @@ class DatabaseManager:
 db_manager = DatabaseManager(os.environ.get('DB_NAME'))
 
 if __name__ == "__main__":
-    os.makedirs(RESOURCES_DIRECTORY, exist_ok=True)
     db_manager.create_database()
 

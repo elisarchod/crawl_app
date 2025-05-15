@@ -1,7 +1,9 @@
+import os
 from functools import wraps
 from threading import Lock
 
 RESOURCES_DIRECTORY = 'resources'
+os.makedirs(RESOURCES_DIRECTORY, exist_ok=True)
 
 def singleton(cls):
     instances = {}

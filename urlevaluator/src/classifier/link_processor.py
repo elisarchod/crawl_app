@@ -1,11 +1,12 @@
 from tqdm.auto import tqdm
-from typing import Optional, List, Tuple, Dict, Any
+from typing import Optional, List, Tuple, Dict
 
 from urlevaluator.src.database.queue import QueueManager
 from urlevaluator.src.utils.log_handler import logger
 from .topic_classifier import TopicClassifier
 
 DEFAULT_TOPICS = ["technology", "sports", "politics", "entertainment", "science"]
+CLASSIFICATION_BATCH_SIZE = 12
 
 class LinkProcessor:
     def __init__(self, initial_url: str, additional_topics: Optional[List[str]]):
@@ -32,7 +33,7 @@ class LinkProcessor:
                 logger.error(f"Error processing link {link_id}: {str(e)}")
         return processed_count
 
-    def process_links(self, batch_size: int):
+    def process_links(self):
         total_processed = 0
         last_id: Optional[int] = None
         total_pending = self.db_manager.get_total_pending()
@@ -40,7 +41,7 @@ class LinkProcessor:
         
         try:
             while True:
-                batch = self.db_manager.fetch_pending_batch(batch_size, last_id)
+                batch = self.db_manager.fetch_pending_batch(CLASSIFICATION_BATCH_SIZE, last_id)
                 if not batch:
                     break
                     
