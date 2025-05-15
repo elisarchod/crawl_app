@@ -1,0 +1,170 @@
+
+# Project description
+
+## Author
+**Name:** Elisar Chodorov  
+**Email:** elisar.chod@gmail.com
+
+## Short answers in respect to assinment
+
+* build a web scrapper that collects and stores the web data in a local duck db
+* collect title and content but used only title for the model, could have used first n of the web page content
+* after we **finish** crawling we classify the text with a queue manager
+* i separated the 2 procces, since we will probaly need 2 diffretnt machines to run this procces, first to crawl with CPU intence machine and then to classify a GPU based machine
+* used the provided list of topics for scoring the text, the application supports passing addtional topcis for comparison, but each addtional topic to score increses infarance time as the model loops each topic
+* the model worked very slow on my laptop, i did not try to use async communication for web crawling, we could defentaly try it
+* Shoud scale horizntaly for handeling 10,000,000 it sound like a lot of url to cover and you should use parallel computing (I guess the don't need to be too powerfull), with a very good and efficient batching in order to avoid duplicate calculations
+* I have a recoivary from where we left in the web crawler and in the link procces based on the db
+* there is an explantaion about the docker, please note that build takes sevral minutes as it downloads the model and initates the db, but it will be ready to scrap and find topic the moment the container finished
+
+#### TL:DR
+just run the follwing commands from the project dir:
+
+Build example:
+```bash
+docker build \
+  --build-arg MODEL_NAME="valhalla/distilbart-mnli-12-1" \
+  --build-arg DB_NAME="scraping_data.db" \
+  -t arpe .
+```
+
+Run container:
+```bash
+docker run arpe scrape-url https://example.com --max-depth 2 --additional-topics "topic1" "topic2"
+```
+
+# Architecture and Components
+
+## Data Flow
+
+```
+WebScraper
+   ↓
+CrawlerDataManager (stores in DB)
+   ↓
+QueueManager (fetches unclassified links)
+   ↓
+LinkProcessor (processes in batches)
+   ↓
+TopicClassifier (classifies using ML model)
+   ↓
+QueueManager (updates classifications)
+   ↓
+Analytics (aggregates topic scores)
+```
+
+### Main Application Flow (`main.py`)
+
+   - Checks if URL exists in database
+   - Initiates scraping if needed
+   - Processes links for classification
+   - Handles errors and cleanup
+
+### Database Layer (`database/`)
+- `init_db.py`: 
+  - Implements database connection using Singleton pattern
+  - Initializes database schema with two tables:
+    - `pages`: Stores page metadata (URL, source URL, depth, title, content)
+    - `links`: Stores discovered links with their text and classification scores
+- `url_db_manager.py`:
+  - Handles data persistence for scraped pages
+  - Performs URL existence checks
+  - Stores page data and associated links
+- `queue.py`:
+  - Implements processing queue for unclassified links
+  - Provides batch fetching with pagination
+  - Updates classification results
+
+### Scraping Component (`scraper/`)
+- `crawler.py`:
+  - Implements depth-first web crawling
+  - Validates URLs before processing
+  - Extracts links and page content
+  - Enforces rate limiting (1 second between requests)
+  - Tracks visited URLs to prevent duplicates
+  - Supports resuming from last visited URL
+  - Has number of URLs collect limit 
+
+### Classification System (`classifier/`)
+- `link_processor.py`:
+  - Processes links in batches
+  - Coordinates classification workflow
+  - Handles errors during classification
+  - Tracks processing progress
+- `topic_classifier.py`:
+  - Interfaces with HuggingFace model
+  - Classifies text into predefined topics
+  - Handles model inference
+
+### Utility Components (`utils/`)
+- `singleton.py`:
+  - Provides database and model management
+- `log_handler.py`:
+  - Centralizes logging configuration
+- `query_db.py`:
+  - Provides database maintenance utilities
+  - Supports data cleanup and inspection
+- `cli.py`:
+  - Implements command-line interface
+  - Exposes core functionality:
+    - Model download
+    - Database creation
+    - Scraping initiation
+
+
+## Configuration and Deployment
+
+### TOML Configuration (`pyproject.toml`)
+- Manages Python package requirements
+- Defines entry points for CLI commands
+
+### Docker Configuration (`Dockerfile`)
+- Base image: Python 3.11-slim
+- Uses Poetry for dependency management
+- Build-time configuration:
+  - Creates database and downloads ML model from HF during build
+  - Ready to be deployed for inferance
+  - Supports build arguments:
+    - `MODEL_NAME`: HuggingFace model identifier
+    - `DB_NAME`: DuckDB database filename
+- Entry point: Interactive bash shell
+
+Build example:
+```bash
+docker build \
+  --build-arg MODEL_NAME="valhalla/distilbart-mnli-12-1" \
+  --build-arg DB_NAME="scraping_data.db" \
+  -t arpe .
+```
+
+Run container:
+```bash
+docker run arpe scrape-url https://example.com --max-depth 3 --additional-topics "topic1" "topic2"
+```
+
+### Testing
+- `tests/` directory contains integration tests
+```bash
+pytest tests/
+```
+
+#### copy project to server
+```bash
+# Remove existing project directory on server
+ssh pie@192.168.1.205 "rm -rf ~/git/arpe"
+
+# Sync project files to server, including only relevant files
+rsync -avz \
+    --include 'urlevaluator/***' \
+    --include 'pyproject.toml' \
+    --include 'poetry.lock' \
+    --include 'Dockerfile' \
+    --include 'README.md' \
+    --include '.env.' \
+    --exclude '**/__*/' \
+    --exclude '*' \
+    . pie@192.168.1.205:~/git/arpe/
+```
+
+
+

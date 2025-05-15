@@ -1,0 +1,32 @@
+[tool.poetry]
+name = "urlevaluator"
+version = "0.1.0"
+description = "this is a home assinment for MLE position in Arpeely"
+authors = ["elisar chodorov <elisarchod@gmail.com>"]
+readme = "README.md"
+packages = [{include = "urlevaluator"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+requests = "^2.32.3"
+beautifulsoup4 = "^4.13.4"
+duckdb = "^1.2.2"
+transformers = "4.51.3"
+torch = "2.1.0"
+numpy = "<2"
+python-dotenv = "^1.1.0"
+tqdm = "^4.67.1"
+
+
+[tool.poetry.group.dev.dependencies]
+ipykernel = "^6.29.5"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+
+[tool.poetry.scripts]
+scrape-url = "urlevaluator.src.utils.cli:scrape_url_command"
+init-db = "urlevaluator.src.utils.cli:create_db_command"
+download-model = "urlevaluator.src.utils.cli:download_model_command"
