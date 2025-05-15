@@ -1,6 +1,6 @@
 import unittest
 
-from src.classifier.link_processor import DEFAULT_TOPICS
+from urlevaluator.src.classifier.link_processor import DEFAULT_TOPICS
 from urlevaluator.src.classifier.topic_classifier import TopicClassifier
 
 class TestTopicClassifier(unittest.TestCase):
