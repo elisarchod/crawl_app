@@ -4,20 +4,21 @@
 **Name:** Elisar Chodorov  
 **Email:** [elisar.chod@gmail.com](mailto:elisar.chod@gmail.com)
 
-## Short answers in respect to assignment document
-
-* Built a web scraper that collects and stores the web data in a local duck db
-* After crawling is **finished** the process starts to classify the text with a queue manager 
-* Scraper collects title and content but used only use title to determine the topic, but the application supports using the content as well
-* Decoupled the 2 processes, since we will need 2 different types of machines to run the processes, 
-  1. first to crawl with a CPU-intensive machine 
-  2. GPU-oriented machine to classify 
-* Used the provided list of topics for scoring the text, the application supports passing additional topics for comparison, but each additional topic to score increases inference time as the model loops each topic
-* The model was quite slow on my laptop, did not try to use async communication for web crawling, but could definitely try
-* Should scale horizontally for handling 10,000,000 URLs, which sounds like a lot to cover, and you should use parallel computing (I guess the don't need to be too powerful), with a very good and efficient batching in order to avoid duplicate calculations
-* Has recovery from where the process stopped both in the web crawler and in the link processor
-* There is an explanation about the docker in this doc, please note the docker build takes several minutes since it downloads the model and initiates the db, 
-This allows the application to serve (scrape & classify) the moment you finish building the Docker image,
+## Answers in respect to assignment document
+* Main requirements
+  * Built a web scraper that collects and stores the web data in a local duck db
+  * After crawling is **finished** the process starts to classify the text with a queue manager 
+  * I Decoupled the 2 processes, since in production we will need 2 different types of machines to run the processes, 
+    1. first to crawl with a CPU-intensive machine 
+    2. GPU-oriented machine to classify
+  * Scraper collects title and content from the web page but only uses title to determine the topic, in order to save resources
+  * Used the provided list of topics for scoring the text, the application supports passing additional topics for comparison, each additional topic to score increases inference time since the model needs to compare the text to each topic
+* Bonus
+  * The model was quite slow on my laptop, did not try to use async communication for web crawling, but could definitely try
+  * Should scale horizontally in order to handle 10,000,000 URLs, we should use parallel computing (with small machines), and pay attention to efficient batching in order to avoid duplicate calculations
+  * Application has recovery from where the process stopped both in the web crawler and in the link processor
+  * There is an explanation about the docker in this doc, please note the docker build takes several minutes since it downloads the model and initiates the db, 
+  This allows the application to serve (scrape & classify) the moment you finish building the Docker image,
 
 ## TL:DR
 Just run the following commands from the project dir after you extract from compressed file (the build takes a while to download the model):
@@ -25,12 +26,12 @@ Just run the following commands from the project dir after you extract from comp
 
 Build example:
 ```bash
-docker build --build-arg MODEL_NAME="valhalla/distilbart-mnli-12-1" --build-arg DB_NAME="scraping_data.db" -t arpe .
+docker build --build-arg MODEL_NAME="valhalla/distilbart-mnli-12-1" --build-arg DB_NAME="scraping_data.db" -t crawl_app .
 ```
 
 Run application:
 ```bash
-docker run arpe scrape-url https://example.com --max-depth 2 --additional-topics "topic1" "topic2"
+docker run crawl_app scrape-url https://example.com --max-depth 2 --additional-topics "topic1" "topic2"
 ```
 
 # Architecture and Components
@@ -141,12 +142,12 @@ Build example:
 docker build \
   --build-arg MODEL_NAME="valhalla/distilbart-mnli-12-1" \
   --build-arg DB_NAME="scraping_data.db" \
-  -t arpe .
+  -t crawl_app .
 ```
 
 Run container:
 ```bash
-docker run arpe scrape-url https://example.com --max-depth 3 --additional-topics "topic1" "topic2"
+docker run crawl_app scrape-url https://example.com --max-depth 3 --additional-topics "topic1" "topic2"
 ```
 
 ### Testing
@@ -154,13 +155,13 @@ docker run arpe scrape-url https://example.com --max-depth 3 --additional-topics
 - `tests/` directory contains integration tests for the model
 
 ```bash
-docker run arpe poetry run python -m unittest discover urlevaluator/tests
+docker run crawl_app poetry run python -m unittest discover urlevaluator/tests
 ```
 
 #### copy project to server
 ```bash
 # Remove existing project directory on server
-ssh pie@192.168.1.205 "rm -rf ~/git/arpe" && rsync -avz --include '**/*.py' --include '**/*.toml' --include 'Dockerfile' --include '**/*.md' --exclude '*' . pie@192.168.1.205:~/git/arpe/
+ssh pie@192.168.1.205 "rm -rf ~/git/crawl_app" && rsync -avz --include '**/*.py' --include '**/*.toml' --include 'Dockerfile' --include '**/*.md' --exclude '*' . pie@192.168.1.205:~/git/crawl_app/
 ```
 
 
