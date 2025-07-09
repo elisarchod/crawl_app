@@ -4,7 +4,7 @@ WORKDIR /app
 
 RUN pip install poetry==2.1.3
 
-COPY pyproject.toml .
+COPY pyproject.toml poetry.lock ./
 COPY README.md .
 COPY urlevaluator ./urlevaluator
 
@@ -16,7 +16,7 @@ ARG MODEL_NAME
 ENV DB_NAME=${DB_NAME}
 ENV MODEL_NAME=${MODEL_NAME}
 
-RUN poetry run init-db
-RUN poetry run download-model
+RUN poetry run poe init-db
+RUN poetry run poe download-model
 
 CMD ["/bin/bash"]

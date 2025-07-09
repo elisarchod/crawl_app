@@ -1,18 +1,17 @@
 import os
 from dotenv import load_dotenv
 import duckdb
-from urlevaluator.src.utils.singleton import singleton, RESOURCES_DIRECTORY
-from urlevaluator.src.utils.log_handler import logger
+
+from ..utils.log_handler import logger
 
 load_dotenv()
 
-@singleton
 class DatabaseManager:
     def __init__(self, db_name: str = None):
-        self.db_name = db_name
-        if not self.db_name:
-            raise ValueError("DB_NAME environment variable is not set")
-        self.db_path = os.path.join(RESOURCES_DIRECTORY, self.db_name)
+        if db_name is None:
+            db_name = os.environ.get('DB_NAME', 'scraping_results.db')
+        os.makedirs('resources', exist_ok=True)
+        self.db_path: str = os.path.join('resources', db_name)
 
     def get_db_path(self) -> str:
         return self.db_path
@@ -57,8 +56,10 @@ class DatabaseManager:
         conn.close()
         logger.info("Database initialization completed successfully")
 
-db_manager = DatabaseManager(os.environ.get('DB_NAME'))
+def get_db_manager(db_name: str = None):
+    """Get a new database manager instance."""
+    return DatabaseManager(db_name)
 
 if __name__ == "__main__":
-    db_manager.create_database()
+    get_db_manager().create_database()
 

@@ -1,9 +1,8 @@
-from urlevaluator.src.database.init_db import db_manager
-from urlevaluator.src.utils.log_handler import logger
+from .log_handler import logger
 import duckdb
 
-def aggregate_topic_scores(initial_url: str):
-    conn = duckdb.connect(db_manager.get_db_path())
+def aggregate_topic_scores(initial_url: str, db_path: str):
+    conn = duckdb.connect(db_path)
     query = """
         WITH numbered_scores AS (
             SELECT

@@ -1,19 +1,16 @@
+from typing import Optional
 import os
-from dotenv import load_dotenv
-from transformers import AutoModelForSequenceClassification, AutoTokenizer
-from urlevaluator.src.utils.singleton import singleton, RESOURCES_DIRECTORY
-from urlevaluator.src.utils.log_handler import logger
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
-load_dotenv()
+from ..utils import logger
 
-@singleton
 class ModelManager:
     def __init__(self, model_name: str = None):
         self.model_name = model_name
         if not self.model_name:
-            raise ValueError("Model name must be provided")
-            
-        self.model_path = os.path.join(RESOURCES_DIRECTORY, self.model_name)
+            self.model_name = os.environ.get('MODEL_NAME', 'facebook/bart-large-mnli')
+        os.makedirs('resources', exist_ok=True)
+        self.model_path = os.path.join('resources', self.model_name)
 
     def get_model_path(self) -> str:
         return self.model_path
@@ -29,10 +26,12 @@ class ModelManager:
         logger.info(f"Starting model download: {self.model_name}")
         if os.path.exists(self.model_path):
             logger.info(f"Model already exists at {self.model_path}. Skipping download.")
-            return
-        self.save_model()
+        else:
+            self.save_model()
 
-model_manager = ModelManager(os.environ.get('MODEL_NAME'))
+def get_model_manager(model_name: str = None):
+    """Get a new model manager instance."""
+    return ModelManager(model_name)
 
 if __name__ == "__main__":
-    model_manager.download_model()
+    get_model_manager().download_model()

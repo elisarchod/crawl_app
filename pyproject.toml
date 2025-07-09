@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "this is a home assinment for MLE position in Arpeely"
 authors = ["elisar chodorov <elisarchod@gmail.com>"]
 readme = "README.md"
-packages = [{include = "urlevaluator"}]
+packages = [{include = "urlevaluator", from = "."}]
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -16,17 +16,27 @@ torch = "2.1.0"
 numpy = "<2"
 python-dotenv = "^1.1.0"
 tqdm = "^4.67.1"
+poethepoet = "^0.36.0"
 
 
 [tool.poetry.group.dev.dependencies]
-ipykernel = "^6.29.5"
+pytest = "^8.4.1"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
 
-[tool.poetry.scripts]
-scrape-url = "urlevaluator.src.utils.cli:scrape_url_command"
-init-db = "urlevaluator.src.utils.cli:create_db_command"
-download-model = "urlevaluator.src.utils.cli:download_model_command"
+[tool.poe.tasks]
+init-db = {cmd = "python -c \"from urlevaluator.src.database.init_db import db_manager; db_manager.create_database()\"", help = "Initialize the database with required tables"}
+download-model = {cmd = "python -c \"from urlevaluator.src.classifier.download_model import model_manager; model_manager.download_model()\"", help = "Download the ML model for topic classification"}
+scrape = {cmd = "python urlevaluator/src/main.py", help = "Crawl website and classify links"}
+scrape-url = {cmd = "python -c \"from urlevaluator.src.main import crawl_website_and_classify_links; import sys; crawl_website_and_classify_links(sys.argv[1], int(sys.argv[2]) if len(sys.argv) > 2 else 2)\"", help = "Crawl a specific URL with optional depth (default: 2)", args = ["url", "depth?"]}
+scrape-with-topics = {cmd = "python -c \"from urlevaluator.src.main import crawl_website_and_classify_links; import sys; topics = sys.argv[3:] if len(sys.argv) > 3 else None; crawl_website_and_classify_links(sys.argv[1], int(sys.argv[2]) if len(sys.argv) > 2 else 2, topics)\"", help = "Crawl URL with depth and additional topics", args = ["url", "depth?", "topics..."]}
+setup = {cmd = "poe init-db && poe download-model", help = "Set up the project (init database and download model)"}
+test = {cmd = "pytest", help = "Run tests"}

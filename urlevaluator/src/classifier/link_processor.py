@@ -1,61 +1,61 @@
 from tqdm.auto import tqdm
 from typing import Optional, List, Tuple, Dict
 
-from urlevaluator.src.database.queue import QueueManager
-from urlevaluator.src.utils.log_handler import logger
+from ..database import QueueManager
+from ..utils import logger
 from .topic_classifier import TopicClassifier
 
-DEFAULT_TOPICS = ["technology", "sports", "politics", "entertainment", "science"]
-CLASSIFICATION_BATCH_SIZE = 12
+DEFAULT_TOPIC_CATEGORIES = ["technology", "sports", "politics", "entertainment", "science"]
+LINK_CLASSIFICATION_BATCH_SIZE = 12
 
-class LinkProcessor:
-    def __init__(self, initial_url: str, additional_topics: Optional[List[str]]):
-        logger.info("Starting to initialize LinkProcessor")
-        self.topics = [*DEFAULT_TOPICS, *(additional_topics or [])]
-        self.db_manager = QueueManager(initial_url)
-        self.classifier = TopicClassifier(self.topics)
+class LinkTopicClassifier:
+    def __init__(self, crawl_starting_url: str, additional_topic_categories: Optional[List[str]]):
+        logger.info("Starting to initialize LinkTopicClassifier")
+        self.all_topic_categories = [*DEFAULT_TOPIC_CATEGORIES, *(additional_topic_categories or [])]
+        self.classification_queue_manager = QueueManager(crawl_starting_url)
+        self.topic_classifier = TopicClassifier(self.all_topic_categories)
 
-    def _process_single_link(self, link_id: int, target_text: str) -> bool:
-        topic_scores: Dict[str, float] = self.classifier.classify_text(target_text)
+    def _classify_single_link_content(self, link_database_id: int, text_content_to_classify: str) -> bool:
+        topic_classification_scores: Dict[str, float] = self.topic_classifier.classify_text(text_content_to_classify)
 
-        if topic_scores:
-            self.db_manager.update_classification(link_id, topic_scores)
+        if topic_classification_scores:
+            self.classification_queue_manager.update_classification(link_database_id, topic_classification_scores)
             return True
         return False
 
-    def _process_batch(self, batch: List[Tuple[int, str]]) -> int:
-        processed_count = 0
-        for link_id, target_text in tqdm(batch, desc="Processing links"):
+    def _classify_link_batch(self, link_classification_batch: List[Tuple[int, str]]) -> int:
+        successfully_classified_count = 0
+        for link_database_id, text_content_to_classify in tqdm(link_classification_batch, desc="Classifying link content"):
             try:
-                if self._process_single_link(link_id, target_text):
-                    processed_count += 1
-            except Exception as e:
-                logger.error(f"Error processing link {link_id}: {str(e)}")
-        return processed_count
+                if self._classify_single_link_content(link_database_id, text_content_to_classify):
+                    successfully_classified_count += 1
+            except Exception as classification_error:
+                logger.error(f"Error classifying link {link_database_id}: {str(classification_error)}")
+        return successfully_classified_count
 
-    def process_links(self):
-        total_processed = 0
-        last_id: Optional[int] = None
-        total_pending = self.db_manager.get_total_pending()
-        logger.info(f"Starting to process {total_pending} pending links")
+    def classify_all_pending_links(self):
+        total_links_classified = 0
+        last_processed_link_id: Optional[int] = None
+        total_pending_links = self.classification_queue_manager.get_total_pending()
+        logger.info(f"Starting to classify {total_pending_links} pending links")
         
         try:
             while True:
-                batch = self.db_manager.fetch_pending_batch(CLASSIFICATION_BATCH_SIZE, last_id)
-                if not batch:
+                link_classification_batch = self.classification_queue_manager.fetch_pending_batch(LINK_CLASSIFICATION_BATCH_SIZE, last_processed_link_id)
+                if not link_classification_batch:
                     break
                     
-                processed_in_batch = self._process_batch(batch)
-                total_processed += processed_in_batch
-                last_id = batch[-1][0]
+                successfully_classified_in_batch = self._classify_link_batch(link_classification_batch)
+                total_links_classified += successfully_classified_in_batch
+                last_processed_link_id = link_classification_batch[-1][0]
                 
-                self.db_manager.connection.commit()
-                logger.info(f"Processed {total_processed}/{total_pending} links")
+                self.classification_queue_manager.connection.commit()
+                logger.info(f"Classified {total_links_classified}/{total_pending_links} links")
                 
-        except Exception as e:
-            logger.error(f"Error in process_links: {str(e)}")
+        except Exception as processing_error:
+            logger.error(f"Error in classify_all_pending_links: {str(processing_error)}")
             raise
         finally:
-            self.db_manager.close()
-            logger.info(f"Completed processing {total_processed} links")
+            self.classification_queue_manager.close()
+            logger.info(f"Completed classifying {total_links_classified} links")
             

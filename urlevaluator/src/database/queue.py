@@ -2,12 +2,12 @@ from typing import List, Optional, Tuple
 
 import duckdb
 
-from .init_db import db_manager
+from .init_db import get_db_manager
 
 
 class QueueManager:
-    def __init__(self, initial_url: str):
-        self.connection = duckdb.connect(db_manager.get_db_path())
+    def __init__(self, initial_url: str, db_name=None):
+        self.connection = duckdb.connect(get_db_manager(db_name).get_db_path())
         self.initial_url = initial_url
 
     def fetch_pending_batch(self, batch_size: int, last_id: Optional[int]) -> List[Tuple[int, str]]:
