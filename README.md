@@ -1,10 +1,5 @@
 # Project description
 
-## Author
-**Name:** Elisar Chodorov  
-**Email:** [elisarchod@gmail.com](mailto:elisarchod@gmail.com)
-
-## Answers in respect to assignment document
 * Main requirements
   * Built a web scraper that collects and stores the web data in a local duck db
   * After crawling is **finished** the process starts to classify the text with a queue manager 
@@ -15,9 +10,9 @@
   * Used the provided list of topics for scoring the text, the application supports passing additional topics for comparison, each additional topic to score increases inference time since the model needs to compare the text to each topic
 * Bonus
   * The model was quite slow on my laptop, did not try to use async communication for web crawling, but could definitely try
-  * Should scale horizontally in order to handle 10,000,000 URLs, we should use parallel computing (with small machines), and pay attention to efficient batching in order to avoid duplicate calculations
+  * Could be scale horizontally in order to handle large trafic, we should use parallel computing (with small machines), and pay attention to efficient batching in order to avoid duplicate calculations
   * Application has recovery from where the process stopped both in the web crawler and in the link processor
-  * There is an explanation about the docker in this doc, please note the docker build takes several minutes since it downloads the model and initiates the db, 
+  * please note the docker build takes several minutes since it downloads the model and initiates the db, 
   This allows the application to serve (scrape & classify) the moment you finish building the Docker image,
 
 ## TL:DR

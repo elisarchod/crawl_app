@@ -1,0 +1,93 @@
+---
+description: Python best practices and patterns for modern software development
+alwaysApply: false
+---
+Clean Code Principles for Python LLM Assistant
+This document outlines a set of actionable rules for an LLM to follow when generating Python code. The goal is to produce code that is clean, readable, maintainable, and testable, adhering to the principles of "Clean Code" and the official PEP 8 style guide.
+1. Naming Conventions: Reveal Intent
+Names are the first and most important form of documentation.
+* Rule 1.1: Use Intention-Revealing Names. Names must clearly describe their purpose.
+   * Bad: d, l, proc_data()
+   * Good: elapsed_time_in_days, customer_records, fetch_user_profile()
+* Rule 1.2: Follow PEP 8 Standards.
+   * snake_case for functions and variables.
+   * PascalCase for classes.
+   * UPPERCASE_SNAKE_CASE for constants.
+   * _leading_underscore for non-public instance variables.
+* Rule 1.3: Avoid Misleading Names. Don't name a variable user_list if it is a dict. Name it users_by_id or user_mapping instead.
+2. Functions: Do One Thing Well
+Functions are the verbs of your code; they should be focused and predictable.
+* Rule 2.1: Single Responsibility Principle (SRP). A function should do exactly one thing. If a function downloads data, parses it, and saves it to a database, it should be split into three separate functions.
+* Rule 2.2: Keep Functions Small. Aim for functions under 20 lines. They should be easy to understand at a glance.
+* Rule 2.3: Limit Arguments. Avoid functions with more than two arguments. If you need more, encapsulate them into a dataclass or a dedicated object.
+   * Bad: def create_user(username, password, email, age, country): ...
+   * Good:
+from dataclasses import dataclass
+
+@dataclass
+class UserData:
+   username: str
+   password: str
+   email: str
+   age: int
+   country: str
+
+def create_user(user_data: UserData): ...
+
+   * Rule 2.4: No Side Effects (Favor Purity). A function should not modify its inputs or global state. It should return new values instead of mutating existing ones.
+   * Bad (mutates input):
+def add_full_name(user_profile: dict):
+   # This modifies the original dictionary, which can be unexpected.
+   user_profile['full_name'] = f"{user_profile['first']} {user_profile['last']}"
+
+   * Good (returns a new object):
+def create_user_with_full_name(user_profile: dict) -> dict:
+   # Returns a new dictionary, leaving the original unchanged.
+   return {
+       **user_profile,
+       'full_name': f"{user_profile['first']} {user_profile['last']}"
+   }
+
+3. Classes: Cohesive and Focused
+Classes are the nouns of your code; they should represent a single, well-defined concept.
+      * Rule 3.1: High Cohesion (SRP for Classes). A class should have a small number of instance variables. If a class has variables that are only used by certain methods, it's a sign that it should be split into smaller, more focused classes.
+      * Rule 3.2: Encapsulate Data. Hide internal implementation details. Use properties (@property) to provide controlled access to data instead of exposing public attributes directly.
+4. Formatting and Readability
+Clean formatting allows readers to focus on logic, not on deciphering layout.
+      * Rule 4.1: Strictly Adhere to PEP 8. All generated code must be compliant. This includes line length (79 characters), indentation (4 spaces), and correct whitespace.
+      * Rule 4.2: Order Imports Correctly. Group imports in the following order, separated by a blank line:
+      1. Standard library imports (import os)
+      2. Third-party library imports (import pandas as pd)
+      3. Local application/library imports (from . import my_module)
+      * Rule 4.3: Use Blank Lines to Separate Logical Blocks. Group related lines of code together to create visual "paragraphs."
+      * Rule 4.4: Embrace Modern Python Idioms. Use f-strings, list comprehensions, the with statement, and tuple unpacking.
+5. Comments: Explain the "Why," Not the "How"
+Good code is self-documenting. Comments are for what the code can't say.
+      * Rule 5.1: Explain Business Logic. Use comments to explain the "why" behind a decision, especially for complex or non-obvious business rules.
+      * Good: # We must round up to the nearest integer to meet regulatory requirements.
+      * Rule 5.2: Use Proper Docstrings (PEP 257). Only important public module, function, class, and method should have a docstring.
+      * Good (Google Style Docstring):
+def calculate_iou(box_a: tuple, box_b: tuple) -> float:
+   """Calculates the Intersection over Union (IoU) of two bounding boxes.
+
+   Args:
+       box_a: A tuple representing the first box (x1, y1, x2, y2).
+       box_b: A tuple representing the second box (x1, y1, x2, y2).
+
+   Returns:
+       The IoU score as a float between 0.0 and 1.0.
+   """
+   # ... implementation ...
+
+6. Error Handling: Be Explicit and Graceful
+         * Rule 6.1: Use Specific Exceptions. Never use a bare except:. Always catch the most specific exception possible.
+         * Bad: except: # Catches everything, including SystemExit
+         * Good: except FileNotFoundError: ... or except (KeyError, ValueError): ...
+         * Rule 6.2: Provide Context in Error Messages. When raising an exception, include a clear message explaining what went wrong and which data was involved.
+         * Bad: raise ValueError("Invalid input")
+         * Good: raise ValueError(f"User ID '{user_id}' not found.")
+7. Simplicity and Structure
+         * Rule 7.1: DRY (Don't Repeat Yourself). Abstract repeated logic into functions or classes.
+         * Rule 7.2: Use Type Hinting. Add type hints (typing module) to all function signatures. This improves clarity, enables static analysis, and serves as documentation.
+         * Bad: def process_data(data, config):
+         * Good: def process_data(data: list[dict], config: dict) -> pd.DataFrame:
