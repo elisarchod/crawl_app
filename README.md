@@ -9,7 +9,7 @@
   * Scraper collects title and content from the web page but only uses title to determine the topic, in order to save resources
   * Used the provided list of topics for scoring the text, the application supports passing additional topics for comparison, each additional topic to score increases inference time since the model needs to compare the text to each topic
 * Bonus
-  * The model was quite slow on my laptop, did not try to use async communication for web crawling, but could definitely try
+  * Scrapes web with async
   * Could be scale horizontally in order to handle large trafic, we should use parallel computing (with small machines), and pay attention to efficient batching in order to avoid duplicate calculations
   * Application has recovery from where the process stopped both in the web crawler and in the link processor
   * please note the docker build takes several minutes since it downloads the model and initiates the db, 
